@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+    <head>
+        <title>PyHumidity Web</title>
+    </head>
+    <body>
+        <h1>PyHumidity Web</h1>
+        <h2>Statistic</h2>
+        <div>
+            <canvas id="humidityChart"></canvas>
+        </div>
+          
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <script>
+            function HttpRequest(url, method="GET")
+            {
+                const promise = new Promise((resolve, reject) => 
+                {
+                    let query = new XMLHttpRequest();
+                    query.open(method, url, true);
+                    query.onload = () =>
+                    {
+                        if(query.status >= 400) {
+                            console.log(`${query} has failed`);
+                            reject(query);
+                        }
+                        else{
+                            resolve(query); 
+                        }
+                    }
+                    query.send();
+                });
+                return promise;
+            }
+            async function GetData()
+            {
+                var data = await Promise.all([new HttpRequest("humidity/")]);
+                var temp = JSON.parse(data[0].responseText);
+                var date = [];
+                var tmp = [];
+                var hmd = [];
+                var treshold = [];
+                temp.forEach((t) => {
+                    hmd.push(t["Humidity"]);
+                    tmp.push(t["Temperature"]);
+                    date.push(t["Timestamp"]);
+                    treshold.push(75.0);
+                });
+                const ctx = document.getElementById('humidityChart');
+                new Chart(ctx,
+                {
+                    type: 'line',
+                    data: {
+                        labels: date,
+                        datasets: [
+                            {
+                                label: 'Humidity',
+                                data: hmd,
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Treshold 75%',
+                                data: treshold,
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Temperature',
+                                data: tmp,
+                                borderWidth: 1
+                            },
+                        ]
+                    },
+                    options: {
+                        scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                        }
+                    },
+                });
+            }
+            GetData();
+            
+          </script>
+        <h2>Latest humidity values</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Datetime (UTC)</th>
+                    <th>Humidity (%)</th>
+                    <th>Temperature °C</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in datas %}
+                    <tr style="color:{{ 'red' if data.humidity > 75 else 'black'}}; text-align: center;">
+                    <td>{{ data.datetime }}</td>
+                    <td>{{ data.humidity }}</td>
+                    <td>{{ data.temperature }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
