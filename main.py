@@ -44,6 +44,8 @@ def hello_world():
     Session2.configure(bind=engine)
     session = Session2()
     data = session.query(HumidityValue).all()
+    if len(data) > 500:
+        data = data[len(data)-500:]
     data.reverse()
     return render_template("home.html", datas=data)
 
