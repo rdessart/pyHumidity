@@ -6,12 +6,35 @@
     <body>
         <h1>PyHumidity Web</h1>
         <h2>Statistic</h2>
+        <table>
+            <tr>
+                <td>Timespan : </td>
+                <td>
+                    <select name="time" id="time" onchange="GetData();">
+                        <option value="-1" selected>All datas</option>
+                        <option value="20">1 min</option>
+                        <option value="100">5 min</option>
+                        <option value="300">15 min</option>
+                        <option value="600">30 min</option>
+                        <option value="900">45 min</option>
+                        <option value="1200">1 h</option>
+                        <option value="3600">3 h</option>
+                        <option value="7200">6 h</option>
+                        <option value="10800">9 h</option>
+                        <option value="14400">12 h</option>
+                        <option value="28800">24 h</option>
+                    </select>
+                </td>
+                <td><button onclick="GetData();">Refresh</button></td>
+            </tr>
+        </table>
         <div>
             <canvas id="humidityChart"></canvas>
         </div>
           
           <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
           <script>
+            var chart = undefined;
             function HttpRequest(url, method="GET")
             {
                 const promise = new Promise((resolve, reject) => 
@@ -34,7 +57,8 @@
             }
             async function GetData()
             {
-                var data = await Promise.all([new HttpRequest("humidity/")]);
+                var timespan = document.getElementById("time").value;
+                var data = await Promise.all([new HttpRequest(`humidity/${document.getElementById("time").value}`)]);
                 var temp = JSON.parse(data[0].responseText);
                 var date = [];
                 var tmp = [];
@@ -47,7 +71,10 @@
                     treshold.push(75.0);
                 });
                 const ctx = document.getElementById('humidityChart');
-                new Chart(ctx,
+                if(chart != undefined){
+                    chart.destroy();
+                }
+                chart = new Chart(ctx,
                 {
                     type: 'line',
                     data: {
@@ -79,6 +106,7 @@
                     },
                 });
             }
+            console.log(chart);
             GetData();
             
           </script>

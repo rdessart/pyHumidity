@@ -47,14 +47,17 @@ def hello_world():
     data.reverse()
     return render_template("home.html", datas=data)
 
-@app.route("/humidity/", methods=["GET"])
-def getHumidity():
+@app.route("/humidity/<maxVal>", methods=["GET"])
+def getHumidity(maxVal=-1):
+    maxVal = int(maxVal)
     Session2 = sqlalchemy.orm.sessionmaker()
     Session2.configure(bind=engine)
     session = Session2()
     data = session.query(HumidityValue).all()
-    if(len(data) > 480):
-        data = data[len(data)-28800:]
+    if maxVal < 0:
+        return jsonify([d.Serialize() for d in data])
+    if(len(data) > maxVal):
+        data = data[len(data) - maxVal:]
     return jsonify([d.Serialize() for d in data])
 
 @app.route("/add/", methods=['POST'])
