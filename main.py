@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, Response
 import sqlalchemy
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
@@ -49,6 +49,7 @@ def hello_world():
     data.reverse()
     return render_template("home.html", datas=data)
 
+
 @app.route("/humidity/<maxVal>", methods=["GET"])
 def getHumidity(maxVal=-1):
     maxVal = int(maxVal)
@@ -62,6 +63,7 @@ def getHumidity(maxVal=-1):
         data = data[len(data) - maxVal:]
     return jsonify([d.Serialize() for d in data])
 
+
 @app.route("/add/", methods=['POST'])
 def postHumidity():
     temp = float(request.form['temperature'])
@@ -74,5 +76,21 @@ def postHumidity():
     session.commit()
     return "<p>Received</p>"
 
+
+@app.route("/get_csv/", methods=['GET'])
+def getHumidityCSV():
+    Session2 = sqlalchemy.orm.sessionmaker()
+    Session2.configure(bind=engine)
+    session = Session2()
+    datas: list[HumidityValue] = session.query(HumidityValue).all()
+    csv_out = "TIMESTAMP;HUMIDITY (%);TEMPERATURE (°C)\n"
+    for data in datas:
+        csv_out += f"{data.datetime.isoformat()};{data.humidity:0.1f};{data.temperature:0.1f}\n"
+    return Response(csv_out, 
+                    mimetype='text/plain',
+                    headers={'Content-disposition': 'attachment; filename=humidity.csv'})
+
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    # app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(port=7005)
