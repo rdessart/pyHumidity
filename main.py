@@ -3,9 +3,13 @@ from flask import Flask, request, render_template, jsonify, Response
 import sqlalchemy
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
+from openpyxl import Workbook
+from flask_sock import Sock
+from flask_socketio import SocketIO
 
 
-engine = sqlalchemy.create_engine("mariadb+mariadbconnector://rdessart:xxxx@localhost:3306/home")
+
+engine = sqlalchemy.create_engine("mariadb+mariadbconnector://rdessart:roro3323@192.168.0.10:3306/home")
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -33,6 +37,10 @@ if(len(sys.argv) > 1):
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+app.config['DEBUG'] = True
+app.config['TESTING'] = True
+socketio = SocketIO(app)
 
 Session = sqlalchemy.orm.sessionmaker()
 Session.configure(bind=engine)
@@ -72,8 +80,9 @@ def postHumidity():
         datetime=datetime.now().isoformat(), 
         temperature=temp, 
         humidity=humidity)
-    session.add(data)
-    session.commit()
+    # session.add(data)
+    # session.commit()
+    socketio.emit('newHumidity', data, broadcast=True)
     return "<p>Received</p>"
 
 
@@ -92,5 +101,5 @@ def getHumidityCSV():
 
 
 if __name__ == "__main__":
-    # app.run(debug=True, host="0.0.0.0", port=8080)
-    app.run(port=7005)
+    socketio.run(debug=True, host="0.0.0.0", port=8080)
+    # app.run(port=7005)

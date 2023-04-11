@@ -19,7 +19,7 @@ DHTStable DHT;
 int sensorPin = 5;
 
 WiFiClient wifi;
-HttpClient client = HttpClient(wifi, "192.168.0.20", 8080);
+HttpClient client = HttpClient(wifi, "192.168.0.X", 80);
 
 void setup() {
   Serial.begin(115200);
